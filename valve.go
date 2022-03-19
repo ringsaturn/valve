@@ -87,13 +87,9 @@ func (c *Core) Start(ctx context.Context) error {
 		}
 
 		if len(outItem) >= int(c.BatchSize) {
-			select {
-			case c.out <- outItem:
-				outItem = make([]interface{}, 0)
-				atomic.AddInt64(&c.outCounter, 1)
-			default:
-				continue
-			}
+			c.out <- outItem
+			outItem = make([]interface{}, 0)
+			atomic.AddInt64(&c.outCounter, 1)
 		}
 	}
 }
