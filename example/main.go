@@ -13,7 +13,7 @@ type Task struct {
 	Time time.Time
 }
 
-func Producer(valveCore *valve.Core, producerFreq time.Duration, timeout time.Duration) error {
+func Producer(valveCore *valve.Core[*Task], producerFreq time.Duration, timeout time.Duration) error {
 	ticker := time.NewTicker(producerFreq)
 	for {
 		select {
@@ -21,7 +21,7 @@ func Producer(valveCore *valve.Core, producerFreq time.Duration, timeout time.Du
 			addFunc := func() error {
 				ctx, cancel := context.WithTimeout(context.TODO(), timeout)
 				defer cancel()
-				return valveCore.Add(ctx, Task{Time: time.Now()})
+				return valveCore.Add(ctx, &Task{Time: time.Now()})
 			}
 
 			if err := addFunc(); err != nil {
@@ -31,7 +31,7 @@ func Producer(valveCore *valve.Core, producerFreq time.Duration, timeout time.Du
 	}
 }
 
-func Consumer(valveCore *valve.Core, ioTime time.Duration) error {
+func Consumer(valveCore *valve.Core[*Task], ioTime time.Duration) error {
 	out, err := valveCore.Receive()
 	if err != nil {
 		return err
@@ -52,7 +52,7 @@ func main() {
 	initCtx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	valveCore, err := valve.NewCore(time.NewTicker(100*time.Millisecond), 100, 100, 2)
+	valveCore, err := valve.NewCore[*Task](time.NewTicker(100*time.Millisecond), 100, 100, 2)
 	if err != nil {
 		panic(err)
 	}
